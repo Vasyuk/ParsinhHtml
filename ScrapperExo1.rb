@@ -1,17 +1,28 @@
 require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
+require 'bundler'
 @email = { :name => "",:emails => ""}
+@n =1
+
 
 def getEmail(url)
+    Bundler.require
+    session = GoogleDrive::Session.from_service_account_key("client_secret.json")
+    spreadsheet = session.spreadsheet_by_title("Emails")
+    worksheet = spreadsheet.worksheets.first
+    @n += 1
     page = Nokogiri::HTML(open(url))
     @email[:name] = page.css('h1').text
+    worksheet[@n, 1] = page.css('h1').text
     page.css("font").each do |node|
       if node.text.include? "@"
         @email[:emails] = node.text
+        worksheet[@n, 2] = node.text
       end
     end
     puts @email
+    worksheet.save
 end
 
 def getUrl()
